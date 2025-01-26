@@ -1,6 +1,0 @@
-sources:
-  - name: raw_source
-    database: RAW_DB
-    schema: UNIFIED_EVENTS
-    tables:
-      - name: SNOWPLW_UNFIED_EVENTS
