@@ -1,0 +1,238 @@
+name: 'snowplow_unified'
+version: '0.5.0'
+config-version: 2
+
+flags:
+  send_anonymous_usage_stats: false
+  use_colors: true
+
+require-dbt-version: [">=1.6.0", "<2.0.0"]
+
+profile: 'default'
+
+dispatch:
+  - macro_namespace: dbt
+    search_order: ['dbt-snowplow-utils', 'dbt']
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+docs-paths: ["docs"]
+asset-paths: ["assets"]
+
+target-path: "target"
+clean-targets:
+    - "target"
+    - "dbt_modules"
+    - "dbt_packages"
+
+vars:
+  snowplow_unified:
+    snowplow__database: 'RAW_DB'
+    snowplow__atomic_schema: 'UNIFIED_EVENTS'
+    snowplow__events_table: 'SNOWPLW_UNFIED_EVENTS'
+    snowplow__events: "{{ source('atomic', 'events') }}"
+    # See https://docs.snowplow.io/docs/modeling-your-data/modeling-your-data-with-dbt/dbt-configuration/unified/ for more information and an interactive tool to help you with the variable setup
+    # Please only add those that you change the values of to your root dbt_project.yml file, do not copy all values as this can lead to unexpected issues
+
+    # WAREHOUSE & TRACKER
+    # See https://docs.snowplow.io/docs/modeling-your-data/modeling-your-data-with-dbt/dbt-configuration/unified/ for more information
+    #snowplow__atomic_schema: 'atomic_data_sample' # Only set if not using 'atomic' schema for Snowplow events data
+    #snowplow__database: # Only set if not using target.database for Snowplow events data -- WILL BE IGNORED FOR DATABRICKS
+    snowplow__dev_target_name: dev
+    # snowplow__events_table: "events" # Only set if not using 'events' table for Snowplow events data
+    snowplow__enable_web: true
+    snowplow__enable_mobile: false
+    snowplow__heartbeat: 10
+    snowplow__min_visit_length: 5
+    snowplow__sessions_table: "{{ ref('snowplow_unified_sessions') }}" # Change to your custom sessions table if you have disabled the standard sessions table in favour of a custom version. Advanced config.
+    snowplow__ga4_categories_seed: snowplow_unified_dim_ga4_source_categories
+    snowplow__geo_mapping_seed: snowplow_unified_dim_geo_country_mapping
+    snowplow__rfc_5646_seed: snowplow_unified_dim_rfc_5646_language_mapping
+    snowplow__iso_639_2t_seed: snowplow_unified_dim_iso_639_2t
+    snowplow__iso_639_3_seed: snowplow_unified_dim_iso_639_3
+    snowplow__grant_select_to: []
+    snowplow__grant_schema_usage: true
+
+
+    # OPERATION & LOGIC
+    snowplow__allow_refresh: false
+    snowplow__backfill_limit_days: 30
+    # snowplow__conversion_events: [{'name': 'view_page', 'condition': "event_name = 'page_view'", "list_events": true},
+    #                               {'name': 'sign_up', 'condition': "event_name = 'sign_up'", 'value': 5}
+    #                             ]
+    snowplow__cwv_days_to_measure: 28
+    snowplow__cwv_percentile: 75
+    snowplow__days_late_allowed: 3
+    # snowplow__allow_null_dvce_tstamps: false
+    snowplow__list_event_counts: false
+    snowplow__lookback_window_hours: 6
+    snowplow__max_session_days: 3
+    snowplow__session_lookback_days: 730
+    snowplow__session_stitching: true
+    snowplow__view_stitching: false
+    snowplow__conversion_stitching: true
+    snowplow__session_timestamp: collector_tstamp
+    snowplow__start_date: '2020-01-01'
+    # snowplow__total_all_conversions: false
+    snowplow__upsert_lookback_days: 30
+    snowplow__use_refr_if_mkt_null: false 
+    snowplow__enable_initial_checks: false
+
+    # please refer to the macros within identifiers.sql for default values
+    snowplow__session_identifiers: []
+    snowplow__user_identifiers: []
+    # snowplow__session_sql: 'e.domain_sessionid'
+    # snowplow__user_sql: 'e.domain_userid'
+    # snowplow__custom_sql: ''
+    snowplow__user_stitching_id: user_id
+    # filter your data:
+    snowplow__app_id: []
+    snowplow__ua_bot_filter: true
+
+    # ADDITIONS
+    # add extra web fields:
+    snowplow__enable_yauaa: false
+    snowplow__enable_iab: false
+    snowplow__enable_ua: false
+    snowplow__enable_browser_context: false
+    snowplow__enable_browser_context_2 : false
+    # add extra mobile fields:
+    snowplow__enable_mobile_context: false
+    snowplow__enable_geolocation_context: false
+    snowplow__enable_application_context: false
+    snowplow__enable_screen_context: false
+    snowplow__enable_deep_link_context: false
+    snowplow__enable_screen_summary_context: false
+    # add extra custom fields:
+    snowplow__view_passthroughs: []
+    snowplow__session_passthroughs: []
+    snowplow__user_first_passthroughs: []
+    snowplow__user_last_passthroughs: []
+    snowplow__conversion_passthroughs: []
+    snowplow__view_aggregations: []
+    snowplow__session_aggregations: []
+    snowplow__user_aggregations: []
+
+    # enable custom modules:
+    snowplow__enable_consent: false
+    snowplow__enable_cwv: false
+    snowplow__enable_app_errors: false
+    snowplow__enable_conversions: false
+
+    # WAREHOUSE SPECIFIC
+
+    # Bigquery:
+    snowplow__derived_tstamp_partitioned: true
+
+    # Snowflake:
+    snowplow__query_tag: snowplow_dbt
+    snowplow__snowflake_lakeloader: false
+
+    # Databricks:
+    # Depending on the use case it should either be the catalog (for Unity Catalog users from databricks connector 1.1.1 onwards) or the same value as your snowplow__atomic_schema (unless changed it should be 'atomic')
+    snowplow__databricks_catalog: 'hive_metastore'
+
+    # Redshift/postgres:
+    snowplow__entities_or_sdes: []
+    snowplow__cmp_visible_events: com_snowplowanalytics_snowplow_cmp_visible_1
+    snowplow__consent_preferences_events: com_snowplowanalytics_snowplow_consent_preferences_1
+    snowplow__page_view_context: com_snowplowanalytics_snowplow_web_page_1
+    snowplow__iab_context: com_iab_snowplow_spiders_and_robots_1
+    snowplow__ua_parser_context: com_snowplowanalytics_snowplow_ua_parser_context_1
+    snowplow__yauaa_context: nl_basjes_yauaa_context_1
+    snowplow__cwv_events: com_snowplowanalytics_snowplow_web_vitals_1
+    snowplow__browser_context: com_snowplowanalytics_snowplow_browser_context_1
+    snowplow__browser_context_2: com_snowplowanalytics_snowplow_browser_context_2
+    snowplow__session_context: com_snowplowanalytics_snowplow_client_session_1
+    snowplow__mobile_context: com_snowplowanalytics_snowplow_mobile_context_1
+    snowplow__geolocation_context: com_snowplowanalytics_snowplow_geolocation_context_1
+    snowplow__application_context: com_snowplowanalytics_mobile_application_1
+    snowplow__screen_context: com_snowplowanalytics_mobile_screen_1
+    snowplow__application_error_events: com_snowplowanalytics_snowplow_application_error_1
+    snowplow__screen_view_events: com_snowplowanalytics_mobile_screen_view_1
+    snowplow__deep_link_context: com_snowplowanalytics_mobile_deep_link_1
+    snowplow__screen_summary_context: com_snowplowanalytics_mobile_screen_summary_1
+
+
+# Completely or partially remove models from the manifest during run start.
+on-run-start:
+  - "{{ snowplow_utils.snowplow_delete_from_manifest(var('models_to_remove',[]), ref('snowplow_unified_incremental_manifest')) }}"
+# Check inconsistencies within the variable setup.
+  - "{{ snowplow_unified.config_check() }}"
+
+# Update manifest table with last event consumed per sucessfully executed node/model
+on-run-end:
+  - "{{ snowplow_utils.snowplow_incremental_post_hook(package_name='snowplow_unified', incremental_manifest_table_name='snowplow_unified_incremental_manifest', base_events_this_run_table_name='snowplow_unified_base_events_this_run', session_timestamp=var('snowplow__session_timestamp')) }}"
+  - "{{ snowplow_utils.grant_usage_on_schemas_built_into(var('snowplow__grant_schemas', true)) }}"
+# Tag 'snowplow_unified_incremental' allows snowplow_incremental_post_hook to identify Snowplow models and add their last sucessfull collector_tstamp to the manifest.
+
+
+# Please only add those that you change the values of to your root dbt_project.yml file, do not copy all values as this can lead to unexpected issues
+# If you wish to change the output schemas please see here: https://docs.snowplow.io/docs/modeling-your-data/modeling-your-data-with-dbt/dbt-configuration/unified/#output-schemas
+models:
+  snowplow_unified:
+    +materialized: table
+    +bind: false
+    base:
+      +tags: "base"
+      manifest:
+        +schema: "snowplow_manifest"
+      scratch:
+        +schema: "scratch"
+        +tags: "scratch"
+
+    optional_modules:
+      app_errors:
+        +schema: "derived"
+        +tags: "snowplow_unified_incremental"
+        scratch:
+          +schema: "scratch"
+          +tags: "scratch"
+      consent:
+        +schema: "derived"
+        +tags: ["snowplow_unified_incremental", "derived", "consent"]
+        scratch:
+          +schema: "scratch"
+          +tags: "scratch"
+      conversions:
+        +schema: "derived"
+        +tags: ["snowplow_unified_incremental", "derived", "conversions"]
+        scratch:
+          +schema: "scratch"
+          +tags: "scratch"
+      core_web_vitals:
+        +schema: "derived"
+        +tags: ["snowplow_unified_incremental", "derived", "core_web_vitals"]
+        scratch:
+          +schema: "scratch"
+          +tags: "scratch"
+
+    views:
+      +schema: "derived"
+      +tags: "snowplow_unified_incremental"
+      scratch:
+        +schema: "scratch"
+        +tags: "scratch"
+
+    sessions:
+      +schema: "derived"
+      +tags: "snowplow_unified_incremental"
+      scratch:
+        +schema: "scratch"
+        +tags: "scratch"
+
+    user_mapping:
+      +schema: "derived"
+      +tags: "snowplow_unified_incremental"
+
+    users:
+      +schema: "derived"
+      +tags: "snowplow_unified_incremental"
+      scratch:
+        +schema: "scratch"
+        +tags: "scratch"
+
+seeds:
+  snowplow_unified:
+    +schema: snowplow_manifest

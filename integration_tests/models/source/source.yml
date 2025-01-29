@@ -1,0 +1,29 @@
+sources:
+  - name: atomic
+    database: RAW_DB
+    schema: UNIFIED_EVENTS
+    tables:
+      - name: events
+        identifier: SNOWPLW_UNFIED_EVENTS
+      - name: cmp_visible
+        identifier: CMP_VISIBLE  
+      - name: consent_preferences
+        identifier: CONSENT_PREFERENCES
+      - name: cwv
+        identifier: CWV
+      - name: geolocation_context
+        identifier: GEOLOCATION_CONTEXT
+      - name: screen_engagement_events
+        identifier: SCREEN_ENGAGEMENT_EVENTS
+      - name: screen_view_events
+        identifier: SCREEN_VIEW_EVENTS
+      - name: session_context
+        identifier: SESSION_CONTEXT
+      - name: spider_context
+        identifier: SPIDER_CONTEXT
+      - name: ua_context
+        identifier: UA_CONTEXT
+      - name: vital_events
+        identifier: VITAL_EVENTS
+      - name: yauaa_context
+        identifier: YAUAA_CONTEXT
